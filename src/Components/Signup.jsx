@@ -1,48 +1,83 @@
-import React, { useState } from 'react'
+import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom'
 
 function Signup() {
 
-let [signupdata,setsignupdata] = useState([])
+  let [signupdata, setsignupdata] = useState([])
 
-// let go=useNavigate()
+  let go = useNavigate()
 
-let inputvalue=(e)=>{
-  setsignupdata(
-    {...signupdata,[e.target.name]:e.target.value}
-  )
-}
-
-let signup=()=>{
-  let alreadyuser = JSON.parse(localStorage.getItem("users")) || [];
-
-  let filterdata = alreadyuser.filter((data) => data.email == signupdata.email);
-
-  let existuser = filterdata[0]
-
-
-  if(!signupdata.username || !signupdata.email || !signupdata.password){
-    alert("All fields are mandatory...");
-  } else if (existuser){
-     alert("already signup");
-
-    //  go("/")
-
-  } else{
-    alreadyuser.push(signupdata);
-
-    localStorage.setItem("users", JSON.stringify(alreadyuser));
-    alert("success");
-
-    // go("/")
+  let inputvalue = (e) => {
+    setsignupdata(
+      { ...signupdata, [e.target.name]: e.target.value }
+    )
   }
 
-}
+
+  //allusers-------------------
+  let [already, setalready] = useState([])
+  // console.log(already)
+  useEffect(() => {
+    allusers()
+  }, [])
+
+  let allusers = () => {
+    axios.get("http://localhost:5000/allusers").then((res) => {
+      if (res.data.status) {
+        setalready(res.data.ourusers)
+      }
+    }).catch((err) => {
+      console.log(err)
+    })
+
+  }
+
+
+  let signup = () => {
+
+    let filterdata = already.filter(data => data.email == signupdata.email);
+
+    let existuser = filterdata[0]
+    // console.log(existuser)
+
+    if (!signupdata.username || !signupdata.email || !signupdata.password) {
+      // alert("All fields are mandatory!")
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "All fields are mandatory!",
+      });
+    } else if (existuser) {
+      alert("already signup");
+
+      go("/")
+
+    } else {
+
+      axios.post("http://localhost:5000/signup", { signupdata }).then((res) => {
+        if (res.data.status) {
+          // alert(res.data.msg)
+          Swal.fire({
+            title: res.data.msg,
+      
+            icon: "success"
+          });
+          go("/")
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
+
+    }
+
+  }
 
   return (
     <>
 
-  <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8   login">
+      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8   login">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <img
             alt="Your Company"
@@ -55,9 +90,9 @@ let signup=()=>{
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-          <form action="#" method="POST" className="space-y-6">
+          <div className="space-y-6">
 
-             <div>
+            <div>
               <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
                 Username
               </label>
@@ -94,7 +129,7 @@ let signup=()=>{
                 <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
                   Password
                 </label>
-                
+
               </div>
               <div className="mt-2">
                 <input onChange={inputvalue}
@@ -113,10 +148,10 @@ let signup=()=>{
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                Sign in
+                Sign up
               </button>
             </div>
-          </form>
+          </div>
 
         </div>
       </div>
